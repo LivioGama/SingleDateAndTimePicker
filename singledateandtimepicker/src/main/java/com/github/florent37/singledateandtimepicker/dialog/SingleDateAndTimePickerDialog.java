@@ -312,6 +312,10 @@ public class SingleDateAndTimePickerDialog extends BaseDialog {
         bottomSheetHelper.display();
     }
 
+    public void preDisplay() {
+        bottomSheetHelper.preDisplay();
+    }
+
     @Override
     public void close() {
         super.close();
@@ -594,8 +598,15 @@ public class SingleDateAndTimePickerDialog extends BaseDialog {
             return dialog;
         }
 
-        public void display() {
+        public void preDisplay() {
             dialog = build();
+            dialog.preDisplay();
+        }
+
+        public void display() {
+            if (dialog == null) {
+                dialog = build();
+            }
             dialog.display();
         }
 

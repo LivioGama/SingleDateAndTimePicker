@@ -36,7 +36,7 @@ public class BottomSheetHelper {
     this.handler = new Handler(Looper.getMainLooper());
   }
 
-  private void init() {
+  private void init(final boolean animateImmediately) {
     handler.postDelayed(new Runnable() {
       @Override
       public void run() {
@@ -81,13 +81,23 @@ public class BottomSheetHelper {
               if (listener != null) {
                 listener.onLoaded(view);
               }
-              animateBottomSheet();
+              if (animateImmediately) {
+                animateBottomSheet();
+              } else {
+                view.setVisibility(View.INVISIBLE);
+              }
               return false;
             }
           });
         }
       }
     }, 100);
+  }
+
+  public void preDisplay() {
+    if (context instanceof Activity) {
+      init(false);
+    }
   }
 
   public BottomSheetHelper setListener(Listener listener) {
@@ -100,7 +110,14 @@ public class BottomSheetHelper {
   }
 
   public void display() {
-    init();
+    if (context instanceof Activity) {
+      if (view == null) {
+        init(true);
+      } else {
+        view.setVisibility(View.VISIBLE);
+        animateBottomSheet();
+      }
+    }
   }
 
   public void hide() {
@@ -129,7 +146,7 @@ public class BottomSheetHelper {
   }
 
   private void remove() {
-    if (view.getWindowToken() != null) windowManager.removeView(view);
+    if (view.getWindowToken() != null) windowManager.removeViewImmediate(view);
   }
 
   private void animateBottomSheet() {
