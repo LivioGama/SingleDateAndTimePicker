@@ -6,8 +6,6 @@ import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.PixelFormat;
-import android.os.Handler;
-import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewTreeObserver;
@@ -19,36 +17,24 @@ import static android.content.Context.WINDOW_SERVICE;
 
 public class BottomSheetHelper {
 
-  private Context context;
-  private int layoutId;
-
   private View view;
   private Listener listener;
 
-  private Handler handler;
   private WindowManager windowManager;
+  private WindowManager.LayoutParams layoutParams;
 
   private boolean focusable;
 
   public BottomSheetHelper(Context context, int layoutId) {
-    this.context = context;
-    this.layoutId = layoutId;
-    this.handler = new Handler(Looper.getMainLooper());
-  }
+    if (context instanceof Activity) {
+      windowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
 
-  private void init(final boolean animateImmediately) {
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        if (context instanceof Activity) {
-          windowManager = (WindowManager) context.getSystemService(WINDOW_SERVICE);
+      view = LayoutInflater.from(context).inflate(layoutId, null, true);
 
-          view = LayoutInflater.from(context).inflate(layoutId, null, true);
+      // Don't let it grab the input focus if focusable is false
+      int flags = focusable ? 0 : WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
-          // Don't let it grab the input focus if focusable is false
-          int flags = focusable ? 0 : WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-
-          WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams(
+      layoutParams = new WindowManager.LayoutParams(
               // Shrink the window to wrap the content rather than filling the screen
               WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
               WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
@@ -56,17 +42,15 @@ public class BottomSheetHelper {
               // Make the underlying application window visible through any transparent parts
               PixelFormat.TRANSLUCENT);
 
-          if ((layoutParams.softInputMode
+      if ((layoutParams.softInputMode
               & WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION) == 0) {
-            WindowManager.LayoutParams nl = new WindowManager.LayoutParams();
-            nl.copyFrom(layoutParams);
-            nl.softInputMode |= WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION;
-            layoutParams = nl;
-          }
+        WindowManager.LayoutParams nl = new WindowManager.LayoutParams();
+        nl.copyFrom(layoutParams);
+        nl.softInputMode |= WindowManager.LayoutParams.SOFT_INPUT_IS_FORWARD_NAVIGATION;
+        layoutParams = nl;
+      }
 
-          windowManager.addView(view, layoutParams);
-
-          view.findViewById(R.id.bottom_sheet_background)
+      view.findViewById(R.id.bottom_sheet_background)
               .setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -74,29 +58,16 @@ public class BottomSheetHelper {
                 }
               });
 
-          view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-              view.getViewTreeObserver().removeOnPreDrawListener(this);
-              if (listener != null) {
-                listener.onLoaded(view);
-              }
-              if (animateImmediately) {
-                animateBottomSheet();
-              } else {
-                view.setVisibility(View.INVISIBLE);
-              }
-              return false;
-            }
-          });
+      view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+        @Override
+        public boolean onPreDraw() {
+          view.getViewTreeObserver().removeOnPreDrawListener(this);
+          if (listener != null) {
+            listener.onLoaded(view);
+          }
+          return false;
         }
-      }
-    }, 100);
-  }
-
-  public void preDisplay() {
-    if (context instanceof Activity) {
-      init(false);
+      });
     }
   }
 
@@ -110,39 +81,28 @@ public class BottomSheetHelper {
   }
 
   public void display() {
-    if (context instanceof Activity) {
-      if (view == null) {
-        init(true);
-      } else {
-        view.setVisibility(View.VISIBLE);
-        animateBottomSheet();
-      }
-    }
+    windowManager.addView(view, layoutParams);
+    animateBottomSheet();
   }
 
   public void hide() {
-    handler.postDelayed(new Runnable() {
-      @Override
-      public void run() {
-        final ObjectAnimator objectAnimator =
+    final ObjectAnimator objectAnimator =
             ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0, view.getHeight());
-        objectAnimator.addListener(new AnimatorListenerAdapter() {
-          @Override
-          public void onAnimationEnd(Animator animation) {
-            view.setVisibility(View.GONE);
-            if (listener != null) {
-              listener.onClose();
-            }
-            remove();
-          }
-        });
-        objectAnimator.start();
+    objectAnimator.addListener(new AnimatorListenerAdapter() {
+      @Override
+      public void onAnimationEnd(Animator animation) {
+        view.setVisibility(View.GONE);
+        if (listener != null) {
+          listener.onClose();
+        }
+        remove();
       }
-    }, 200);
+    });
+    objectAnimator.start();
   }
 
   public void dismiss(){
-      remove();
+    remove();
   }
 
   private void remove() {
@@ -151,7 +111,7 @@ public class BottomSheetHelper {
 
   private void animateBottomSheet() {
     final ObjectAnimator objectAnimator =
-        ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, view.getHeight(), 0);
+            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, view.getHeight(), 0);
     objectAnimator.addListener(new AnimatorListenerAdapter() {
 
       @Override
