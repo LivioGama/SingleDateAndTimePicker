@@ -116,9 +116,9 @@ public class BottomSheetHelper {
 
   private void animateBottomSheet() {
     final ObjectAnimator objectAnimator =
-            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, view.getHeight(), 0);
+            ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, windowManager.getDefaultDisplay().getHeight(), 0);
     final ObjectAnimator alphaAnimator =
-            ObjectAnimator.ofFloat(view, View.ALPHA, 0f, 1f);
+            ObjectAnimator.ofFloat(view, View.ALPHA, 0f, 0f, 1f);
     final AnimatorSet set = new AnimatorSet();
     set.playTogether(objectAnimator, alphaAnimator);
     set.addListener(new AnimatorListenerAdapter() {
