@@ -2,6 +2,7 @@ package com.github.florent37.singledateandtimepicker.dialog;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.content.Context;
@@ -88,7 +89,11 @@ public class BottomSheetHelper {
   public void hide() {
     final ObjectAnimator objectAnimator =
             ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, 0, view.getHeight());
-    objectAnimator.addListener(new AnimatorListenerAdapter() {
+    final ObjectAnimator alphaAnimator =
+            ObjectAnimator.ofFloat(view, View.ALPHA, 1f, 0f);
+    final AnimatorSet set = new AnimatorSet();
+    set.playTogether(objectAnimator, alphaAnimator);
+    set.addListener(new AnimatorListenerAdapter() {
       @Override
       public void onAnimationEnd(Animator animation) {
         view.setVisibility(View.GONE);
@@ -98,7 +103,7 @@ public class BottomSheetHelper {
         remove();
       }
     });
-    objectAnimator.start();
+    set.start();
   }
 
   public void dismiss(){
@@ -112,8 +117,11 @@ public class BottomSheetHelper {
   private void animateBottomSheet() {
     final ObjectAnimator objectAnimator =
             ObjectAnimator.ofFloat(view, View.TRANSLATION_Y, view.getHeight(), 0);
-    objectAnimator.addListener(new AnimatorListenerAdapter() {
-
+    final ObjectAnimator alphaAnimator =
+            ObjectAnimator.ofFloat(view, View.ALPHA, 0f, 1f);
+    final AnimatorSet set = new AnimatorSet();
+    set.playTogether(objectAnimator, alphaAnimator);
+    set.addListener(new AnimatorListenerAdapter() {
       @Override
       public void onAnimationEnd(Animator animation) {
         if (listener != null) {
@@ -121,7 +129,7 @@ public class BottomSheetHelper {
         }
       }
     });
-    objectAnimator.start();
+    set.start();
   }
 
   public interface Listener {
